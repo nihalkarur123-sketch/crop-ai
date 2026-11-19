@@ -20,7 +20,12 @@ UUID_RE = re.compile(r"^[0-9a-fA-F-]{36}\.(jpg|jpeg|png)$")
 
 
 def create_app():
-    app = Flask(__name__, static_folder="static", template_folder="templates")
+    base_path = Path(__file__).resolve().parent
+    app = Flask(
+        __name__,
+        static_folder=str(base_path / "static"),
+        template_folder=str(base_path / "templates")
+    )
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "plantcare-ai-dev-secret-key-2026")
     db.init_db(DB_PATH)
 
