@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}PlantCare AI – Smarter Farming. Healthier Crops.{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="hero-pill">
+    <span class="status-dot"></span>
+    <span>AI PATHOLOGY SUITE &bull; COMPUTER VISION ENGINE</span>
+  </div>
+
+  <h1 class="hero-headline">
+    Protect Your Crops With AI‑Powered Plant Intelligence.
+  </h1>
+
+  <p class="hero-subtext">
+    Smarter Farming. Healthier Crops. Detect botanical diseases, blight lesions, and nutrient deficiencies in seconds with field-calibrated vision intelligence.
+  </p>
+
+  <div class="hero-cta-group">
+    <a href="{{ url_for('scan') }}" class="btn btn-primary btn-lg">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7V4h3"/><path d="M20 7V4h-3"/><path d="M4 17v3h3"/><path d="M20 17v3h-3"/><circle cx="12" cy="12" r="3"/></svg>
+      Scan Your Leaf
+    </a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-lg">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+      View Field Analytics
+    </a>
+  </div>
+
+  <!-- Interactive Live Simulator Widget -->
+  <div class="interactive-demo-card">
+    <div class="demo-header">
+      <span class="demo-title">Interactive Vision Simulator</span>
+      <div class="demo-tabs">
+        <button type="button" class="demo-tab-btn active" data-demo="tomato">Tomato Blight</button>
+        <button type="button" class="demo-tab-btn" data-demo="potato">Potato Blight</button>
+        <button type="button" class="demo-tab-btn" data-demo="rice">Healthy Rice</button>
+        <button type="button" class="demo-tab-btn" data-demo="maize">Maize Spot</button>
+      </div>
+    </div>
+
+    <div class="demo-content-grid">
+      <div class="demo-preview-box">
+        <img id="demo-preview-img" src="{{ url_for('static', filename='samples/sample_tomato_blight.jpg') }}" alt="Demo leaf preview" class="demo-preview-img">
+        <div class="demo-radar-scan"></div>
+      </div>
+
+      <div class="demo-analysis-box">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted);">DIAGNOSTIC OUTPUT</span>
+          <span id="demo-status-badge" class="badge badge-diseased">DISEASED</span>
+        </div>
+
+        <h3 id="demo-crop-title" class="demo-crop-title">Early Blight (Alternaria solani)</h3>
+
+        <div class="demo-kv-row">
+          <span class="demo-kv-key">Crop Specimen</span>
+          <span class="demo-kv-val">Tomato (Solanum lycopersicum)</span>
+        </div>
+        <div class="demo-kv-row">
+          <span class="demo-kv-key">Model Confidence</span>
+          <span id="demo-conf-val" class="demo-kv-val">94%</span>
+        </div>
+        <div class="demo-kv-row">
+          <span class="demo-kv-key">Severity Index</span>
+          <span id="demo-sev-val" class="demo-kv-val">High Severity</span>
+        </div>
+        <div class="demo-kv-row" style="border-bottom: none;">
+          <span class="demo-kv-key">Primary Protocol</span>
+          <span class="demo-kv-val" style="font-size: 0.82rem;">Copper fungicide / prune lower foliage</span>
+        </div>
+
+        <a href="{{ url_for('scan') }}?crop=tomato" class="btn btn-secondary btn-sm" style="margin-top: 0.5rem; align-self: flex-start;">
+          Test with Real Image &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Supported Crops & Agronomy Matrix -->
+<section class="section-wrap">
+  <div class="section-head">
+    <div class="section-label">Trained Agronomy Knowledge Base</div>
+    <h2 class="section-title">Covered Agricultural Crops</h2>
+    <p class="section-desc">
+      Our neural vision engine evaluates morphology, chlorosis patterns, and necrotic lesions across five critical staple crops. Click each crop to inspect.
+    </p>
+  </div>
+
+  <div class="crop-matrix-grid">
+    <div class="crop-card active" data-crop="tomato">
+      <div class="crop-card-icon">🍅</div>
+      <div class="crop-card-name">Tomato</div>
+      <div class="crop-card-stat">Solanum lycopersicum</div>
+    </div>
+    <div class="crop-card" data-crop="potato">
+      <div class="crop-card-icon">🥔</div>
+      <div class="crop-card-name">Potato</div>
+      <div class="crop-card-stat">Solanum tuberosum</div>
+    </div>
+    <div class="crop-card" data-crop="rice">
+      <div class="crop-card-icon">🌾</div>
+      <div class="crop-card-name">Rice</div>
+      <div class="crop-card-stat">Oryza sativa</div>
+    </div>
+    <div class="crop-card" data-crop="maize">
+      <div class="crop-card-icon">🌽</div>
+      <div class="crop-card-name">Maize</div>
+      <div class="crop-card-stat">Zea mays</div>
+    </div>
+    <div class="crop-card" data-crop="chilli">
+      <div class="crop-card-icon">🌶️</div>
+      <div class="crop-card-name">Chilli</div>
+      <div class="crop-card-stat">Capsicum annuum</div>
+    </div>
+  </div>
+
+  <div class="crop-detail-drawer" id="crop-detail-drawer">
+    <div>
+      <h3 id="drawer-crop-title" style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.6rem;">Tomato Agronomy Intelligence</h3>
+      <p id="drawer-crop-desc" style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.6; margin-bottom: 1.25rem;">
+        Trained to identify Early Blight (Alternaria solani), Late Blight, Septoria leaf spot, Bacterial speck, and Leaf Mold with fine lesion contour mapping.
+      </p>
+      <a id="drawer-scan-btn" href="{{ url_for('scan') }}?crop=tomato" class="btn btn-primary btn-sm">
+        Scan Tomato Leaf &rarr;
+      </a>
+    </div>
+
+    <div>
+      <h4 style="font-size: 0.85rem; font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.75rem;">Key Pathological Signs Checked</h4>
+      <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.88rem; color: var(--text-secondary);">
+        <li>&bull; Concentric target-board ring lesions on older leaves</li>
+        <li>&bull; Water-soaked brown necrotic patches with pale borders</li>
+        <li>&bull; Interveinal chlorosis and yellowing halos</li>
+        <li>&bull; Powdery fungal sporulation along petiole junctions</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works (4-Step Pipeline) -->
+<section class="section-wrap">
+  <div class="section-head">
+    <div class="section-label">Field Execution Flow</div>
+    <h2 class="section-title">How PlantCare AI Operates</h2>
+    <p class="section-desc">
+      A transparent 4-stage pipeline that delivers fast, verifiable pathology diagnoses directly into the hands of farmers.
+    </p>
+  </div>
+
+  <div class="workflow-grid">
+    <div class="step-card">
+      <div class="step-number">[ 01 / INGEST ]</div>
+      <h3 class="step-title">Leaf Image Upload</h3>
+      <p class="step-desc">
+        Farmer photographs a suspect leaf in the field and uploads via drag-and-drop or smartphone camera. File is pre-validated client-side.
+      </p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">[ 02 / VALIDATE ]</div>
+      <h3 class="step-title">Botanical Specimen Check</h3>
+      <p class="step-desc">
+        Computer vision verifies whether the image contains genuine foliage tissue or non-leaf objects before pathology inference begins.
+      </p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">[ 03 / ANALYZE ]</div>
+      <h3 class="step-title">Gemini Vision AI</h3>
+      <p class="step-desc">
+        High-dimensional multimodal models classify pathogen signatures, quantifying severity (low, medium, high) and calibrated confidence.
+      </p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">[ 04 / ACT ]</div>
+      <h3 class="step-title">Agronomic Protocol</h3>
+      <p class="step-desc">
+        Farmer receives an interactive checklist of observed symptoms and actionable biological and chemical prevention steps.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ Accordion -->
+<section class="section-wrap">
+  <div class="section-head">
+    <div class="section-label">Common Inquiries</div>
+    <h2 class="section-title">Frequently Asked Questions</h2>
+    <p class="section-desc">Practical answers for growers, agronomists, and field technicians.</p>
+  </div>
+
+  <div class="faq-list">
+    <div class="faq-item open">
+      <button type="button" class="faq-question">
+        <span>How clear does the leaf photograph need to be?</span>
+        <span class="faq-chevron">&#9662;</span>
+      </button>
+      <div class="faq-answer">
+        Ensure the single suspect leaf occupies at least 70% of the frame with adequate natural daylight. Avoid heavy shadows, blurry motion, or showing multiple entangled plants in a single photo.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button type="button" class="faq-question">
+        <span>Are the recommended treatments biological or chemical?</span>
+        <span class="faq-chevron">&#9662;</span>
+      </button>
+      <div class="faq-answer">
+        The AI generates holistic agronomic recommendations prioritized by severity: starting with cultural controls (spacing, pruning, drip irrigation), bio-fungicides/neem extracts, followed by targeted contact or systemic compounds when severity is high.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button type="button" class="faq-question">
+        <span>Does the system save all previous farm scans?</span>
+        <span class="faq-chevron">&#9662;</span>
+      </button>
+      <div class="faq-answer">
+        Yes. All scans are automatically preserved in the local database with timestamps, crop metadata, confidence ratings, and original images. You can view, search, and export them as CSV from the History tab.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button type="button" class="faq-question">
+        <span>What happens if I upload an image that isn't a plant leaf?</span>
+        <span class="faq-chevron">&#9662;</span>
+      </button>
+      <div class="faq-answer">
+        The AI botanical gatekeeper identifies non-leaf subjects, flags them with a warning badge, and advises you to upload a clear close-up leaf specimen rather than generating a false diagnosis.
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

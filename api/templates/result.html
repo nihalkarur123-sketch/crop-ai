@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Diagnosis Report – PlantCare AI{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+  <div>
+    <span style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase;">
+      DIAGNOSTIC REPORT &bull; SPECIMEN #{{ diagnosis.id or 'TMP' }}
+    </span>
+    <h1 style="font-size: 1.75rem; font-weight: 800; letter-spacing: -0.03em;">Pathology Evaluation</h1>
+  </div>
+
+  <div style="display: flex; gap: 0.5rem;">
+    <a href="{{ url_for('scan') }}" class="btn btn-secondary btn-sm">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h3"/><path d="M20 7V4h-3"/><path d="M4 17v3h3"/><path d="M20 17v3h-3"/><circle cx="12" cy="12" r="3"/></svg>
+      Scan Another Leaf
+    </a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline btn-sm">Dashboard</a>
+  </div>
+</div>
+
+<div class="result-layout">
+  <!-- Left Column: Inspection Lens -->
+  <div class="result-image-box">
+    <div style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; font-family: var(--font-mono);">
+      <span>SPECIMEN VIEWPORT</span>
+      <span style="color: var(--text-muted);">Hover to magnify 2x</span>
+    </div>
+
+    <div class="image-inspection-lens" id="inspection-lens">
+      <img id="lens-img" src="{{ image_url }}" alt="Uploaded leaf specimen">
+    </div>
+
+    <div style="padding: 0.75rem 1rem; font-size: 0.78rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+      <span>Crop: <strong style="color: var(--text-primary); text-transform: capitalize;">{{ diagnosis.crop }}</strong></span>
+      <span>Evaluated: {{ diagnosis.created_at[:16]|replace('T', ' ') if diagnosis.created_at else 'Just now' }} UTC</span>
+    </div>
+  </div>
+
+  <!-- Right Column: Pathology Report -->
+  <div class="result-report-card">
+    {% set is_healthy = (diagnosis.disease_name|lower == 'healthy' or diagnosis.severity|lower == 'low' and diagnosis.disease_name|lower != 'non-leaf detected') %}
+
+    <div class="report-top-meta">
+      <div>
+        <span style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase;">PREDICTED STATUS</span>
+        <div>
+          {% if diagnosis.is_plant_leaf is defined and not diagnosis.is_plant_leaf %}
+            <span class="badge badge-diseased">NON-LEAF DETECTED</span>
+          {% elif is_healthy %}
+            <span class="badge badge-healthy">OPTIMUM / HEALTHY LEAF</span>
+          {% else %}
+            <span class="badge badge-diseased">PATHOLOGY IDENTIFIED</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div style="text-align: right;">
+        <span style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase;">SEVERITY RATING</span>
+        <div>
+          <span class="badge badge-{{ diagnosis.severity|lower }}" id="report-severity-val">
+            {{ diagnosis.severity|capitalize }} Severity
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+      <h2 class="report-disease-title" id="report-disease-name">{{ diagnosis.disease_name }}</h2>
+      <p style="color: var(--text-secondary); font-size: 0.95rem;">
+        Crop Host: <strong style="color: var(--text-primary); text-transform: capitalize;" id="report-crop-name">{{ diagnosis.crop }}</strong>
+      </p>
+    </div>
+
+    <!-- Calibrated Confidence Gauge -->
+    <div class="report-confidence-meter">
+      <div class="meter-header">
+        <span>Vision Model Confidence</span>
+        <span id="report-confidence-val">{{ diagnosis.confidence }}%</span>
+      </div>
+      <div class="meter-track">
+        <div class="meter-fill" style="width: {{ diagnosis.confidence }}%;"></div>
+      </div>
+    </div>
+
+    <!-- Observed Symptoms Checklist -->
+    <div class="checklist-box">
+      <h3 class="checklist-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Observed Foliage Symptoms (Interactive Field Checklist)
+      </h3>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">Check off symptoms you have personally confirmed on the plant:</p>
+
+      {% set symptoms_list = diagnosis.symptoms if diagnosis.symptoms is defined else (diagnosis.symptoms_seen if diagnosis.symptoms_seen is defined else []) %}
+      <ul class="interactive-checklist">
+        {% for s in symptoms_list %}
+          <li class="interactive-check-item">
+            <input type="checkbox" id="symp-{{ loop.index }}">
+            <label for="symp-{{ loop.index }}" style="cursor: pointer; flex: 1;">{{ s }}</label>
+          </li>
+        {% else %}
+          <li style="color: var(--text-muted); font-size: 0.88rem;">No specific pathogen symptoms flagged. Foliage structure appears healthy.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Recommended Agronomic Protocol Checklist -->
+    <div class="checklist-box">
+      <h3 class="checklist-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Recommended Treatment &amp; Agronomic Protocol
+      </h3>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">Step-by-step action plan generated by PlantCare AI:</p>
+
+      {% set actions_list = diagnosis.actions if diagnosis.actions is defined else (diagnosis.recommended_actions if diagnosis.recommended_actions is defined else []) %}
+      <ul class="interactive-checklist">
+        {% for a in actions_list %}
+          <li class="interactive-check-item">
+            <input type="checkbox" id="act-{{ loop.index }}">
+            <label for="act-{{ loop.index }}" style="cursor: pointer; flex: 1;"><strong>Step {{ loop.index }}:</strong> {{ a }}</label>
+          </li>
+        {% else %}
+          <li style="color: var(--text-muted); font-size: 0.88rem;">Maintain normal balanced irrigation and routine nutrient monitoring.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Official Agronomic Disclaimer -->
+    <div style="font-size: 0.8rem; color: var(--text-muted); background: var(--bg-surface-2); border: 1px solid var(--border-subtle); padding: 0.85rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; line-height: 1.5;">
+      <em>Agronomy Disclaimer: This diagnosis is an AI-generated decision-support recommendation calibrated on visual plant morphology. Always cross-verify chemical application dosages with local agronomy officers or extension services before wide application.</em>
+    </div>
+
+    <!-- Interactive Action Buttons -->
+    <div class="action-bar-row">
+      <button type="button" id="copy-report-btn" class="btn btn-secondary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        Copy Report Summary
+      </button>
+
+      <button type="button" id="print-report-btn" class="btn btn-outline btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+        Print / PDF
+      </button>
+
+      <a href="{{ url_for('scan') }}" class="btn btn-primary btn-sm" style="margin-left: auto;">
+        Scan Next Leaf &rarr;
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

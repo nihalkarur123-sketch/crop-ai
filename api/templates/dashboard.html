@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Field Dashboard – PlantCare AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em;">Farm Health Overview</h1>
+    <p style="font-size: 0.9rem; color: var(--text-secondary);">Real-time pathology aggregation and field intelligence records.</p>
+  </div>
+  <a href="{{ url_for('scan') }}" class="btn btn-primary">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7V4h3"/><path d="M20 7V4h-3"/><path d="M4 17v3h3"/><path d="M20 17v3h-3"/><circle cx="12" cy="12" r="3"/></svg>
+    New Leaf Scan
+  </a>
+</div>
+
+<!-- KPI Cards -->
+<div class="stats-kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-label">Total Field Scans</div>
+    <div class="kpi-value">{{ total }}</div>
+    <div class="kpi-foot">Verified botanical specimens</div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-label">Healthy Crops</div>
+    <div class="kpi-value">{{ healthy }}</div>
+    <div class="kpi-foot">{% if total > 0 %}{{ ((healthy / total) * 100)|round|int }}% optimum canopy{% else %}0% optimum{% endif %}</div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-label">Pathologies Flagged</div>
+    <div class="kpi-value">{{ diseased }}</div>
+    <div class="kpi-foot">{% if total > 0 %}{{ ((diseased / total) * 100)|round|int }}% intervention needed{% else %}0% intervention{% endif %}</div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-label">Average Confidence</div>
+    <div class="kpi-value">{% if avg_conf %}{{ avg_conf }}%{% else %}N/A{% endif %}</div>
+    <div class="kpi-foot">Neural model calibration</div>
+  </div>
+</div>
+
+<!-- Analytics Row: Crop Distribution & Advisory -->
+<div class="dashboard-analytics-row">
+  <!-- Crop Distribution Bars -->
+  <div class="chart-card">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <h3 style="font-size: 1.05rem; font-weight: 700;">Scan Volume by Crop</h3>
+      <span style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted);">MONOCHROME HUD</span>
+    </div>
+
+    <div class="chart-bars-wrap">
+      {% for crop, count in crop_counts.items() %}
+        {% set pct = ((count / total) * 100)|round|int if total > 0 else 0 %}
+        <div class="chart-bar-row">
+          <span style="font-weight: 600; text-transform: capitalize;">{{ crop }}</span>
+          <div class="chart-bar-track">
+            <div class="chart-bar-fill" style="width: {{ pct }}%;"></div>
+          </div>
+          <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); text-align: right;">{{ count }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Field Agronomy Advisory -->
+  <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+    <div>
+      <div style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">FIELD ADVISORY</div>
+      <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem;">Foliage Hygiene</h3>
+      <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5;">
+        {% if diseased > 0 %}
+          Pathogen pressure detected in recent scans. Inspect lower canopy foliage for early sporulation and ensure drip lines avoid splashing soil onto leaf undersides.
+        {% else %}
+          Zero critical fungal threats recorded. Maintain preventive neem or bio-stimulant schedules and monitor field humidity after rains.
+        {% endif %}
+      </p>
+    </div>
+
+    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Engine: Gemini 2.5 Flash</span>
+      <a href="{{ url_for('history') }}" class="btn btn-outline btn-sm">Full History &rarr;</a>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Scans Table -->
+<div class="table-card">
+  <div class="table-toolbar">
+    <div>
+      <h3 style="font-size: 1.15rem; font-weight: 700;">Recent Field Scans</h3>
+      <p style="font-size: 0.82rem; color: var(--text-muted);">Real application diagnoses recorded in local database.</p>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+      <div style="display: flex; gap: 0.4rem;">
+        <button type="button" class="btn btn-outline btn-sm table-filter-pill active" data-filter="all">All</button>
+        <button type="button" class="btn btn-outline btn-sm table-filter-pill" data-filter="healthy">Healthy</button>
+        <button type="button" class="btn btn-outline btn-sm table-filter-pill" data-filter="diseased">Diseased</button>
+      </div>
+
+      <div class="search-input-wrap">
+        <span class="search-icon">&telrec;</span>
+        <input type="text" id="table-search-input" class="search-input" placeholder="Search crop or disease...">
+      </div>
+    </div>
+  </div>
+
+  {% if recent %}
+    <div style="overflow-x: auto;">
+      <table class="data-table" id="filterable-table">
+        <thead>
+          <tr>
+            <th>Specimen</th>
+            <th>Date (UTC)</th>
+            <th>Crop</th>
+            <th>Predicted Condition</th>
+            <th>Confidence</th>
+            <th>Severity</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in recent %}
+            {% set is_healthy = (r.severity|lower == 'low' or r.disease_name|lower == 'healthy') %}
+            <tr data-status="{% if is_healthy %}healthy{% else %}diseased{% endif %}" data-crop="{{ r.crop|lower }}">
+              <td>
+                <img src="{{ url_for('uploaded_file', name=r.image_path) }}" alt="{{ r.crop }}" class="table-thumb">
+              </td>
+              <td style="font-family: var(--font-mono); font-size: 0.82rem;">{{ r.created_at[:10] }}</td>
+              <td style="font-weight: 600; text-transform: capitalize;">{{ r.crop }}</td>
+              <td style="font-weight: 500;">{{ r.disease_name }}</td>
+              <td style="font-family: var(--font-mono);">{{ r.confidence }}%</td>
+              <td>
+                <span class="badge {% if is_healthy %}badge-healthy{% else %}badge-diseased{% endif %}">
+                  {{ r.severity|capitalize }}
+                </span>
+              </td>
+              <td>
+                <a href="{{ url_for('result', diag_id=r.id) }}" class="btn btn-outline btn-sm">Inspect</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 3rem 1rem;">
+      <p style="color: var(--text-muted); margin-bottom: 1rem;">No diagnostic scans recorded yet.</p>
+      <a href="{{ url_for('scan') }}" class="btn btn-primary btn-sm">Scan First Leaf Specimen</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

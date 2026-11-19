@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}AI Leaf Scanner – PlantCare AI{% endblock %}
+
+{% block content %}
+<div class="scanner-layout">
+  <!-- Left Main Column: Scanner Form & Preview Deck -->
+  <div>
+    <!-- Diagnostic Upload Form -->
+    <form id="upload-form" action="{{ url_for('diagnose') }}" method="post" enctype="multipart/form-data">
+      <div style="margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem;">
+          <span style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase;">
+            STEP 1: CONFIRM CROP HOST (SELECT YOUR SPECIMEN)
+          </span>
+          <span style="font-size: 0.78rem; color: var(--text-muted);">Max Upload: {{ max_upload_mb }} MB</span>
+        </div>
+
+        <!-- Native Guaranteed Crop Radio Cards -->
+        <div class="crop-pills-row" id="crop-pills-row">
+          <label class="crop-pill-btn {% if selected_crop == 'chilli' %}active{% endif %}" title="Chilli Pepper (Capsicum)">
+            <input type="radio" name="crop" value="chilli" {% if selected_crop == 'chilli' %}checked{% endif %} style="display:none;">
+            <span>🌶️</span>
+            <span>Chilli</span>
+          </label>
+          <label class="crop-pill-btn {% if selected_crop == 'tomato' %}active{% endif %}" title="Tomato (Solanum lycopersicum)">
+            <input type="radio" name="crop" value="tomato" {% if selected_crop == 'tomato' %}checked{% endif %} style="display:none;">
+            <span>🍅</span>
+            <span>Tomato</span>
+          </label>
+          <label class="crop-pill-btn {% if selected_crop == 'potato' %}active{% endif %}" title="Potato (Solanum tuberosum)">
+            <input type="radio" name="crop" value="potato" {% if selected_crop == 'potato' %}checked{% endif %} style="display:none;">
+            <span>🥔</span>
+            <span>Potato</span>
+          </label>
+          <label class="crop-pill-btn {% if selected_crop == 'rice' %}active{% endif %}" title="Rice (Oryza sativa)">
+            <input type="radio" name="crop" value="rice" {% if selected_crop == 'rice' %}checked{% endif %} style="display:none;">
+            <span>🌾</span>
+            <span>Rice</span>
+          </label>
+          <label class="crop-pill-btn {% if selected_crop == 'maize' %}active{% endif %}" title="Maize / Corn (Zea mays)">
+            <input type="radio" name="crop" value="maize" {% if selected_crop == 'maize' %}checked{% endif %} style="display:none;">
+            <span>🌽</span>
+            <span>Maize</span>
+          </label>
+          <label class="crop-pill-btn {% if selected_crop == 'auto' %}active{% endif %}" title="Auto-Detect Plant Species">
+            <input type="radio" name="crop" value="auto" {% if selected_crop == 'auto' %}checked{% endif %} style="display:none;">
+            <span>🔍</span>
+            <span>Auto-Detect</span>
+          </label>
+        </div>
+      </div>
+
+      <input type="file" name="image" id="image" accept=".jpg,.jpeg,.png" style="display: none;" required>
+
+      <!-- Drop Zone Area -->
+      <div class="dropzone-container" id="drop-zone">
+        <div class="dropzone-icon-wrap">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div class="dropzone-title">Drag and drop your leaf photograph here</div>
+        <div class="dropzone-subtitle">Supports JPG, JPEG, or PNG up to {{ max_upload_mb }} MB</div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('image').click();">
+          Browse Device Files
+        </button>
+      </div>
+
+      <!-- Image Preview Deck (Shown when image loaded) -->
+      <div class="preview-deck" id="preview-deck">
+        <div class="preview-toolbar">
+          <div class="preview-file-info" id="preview-file-info">leaf_specimen.jpg • 240 KB</div>
+          <div class="preview-actions">
+            <button type="button" class="btn btn-outline btn-sm" id="zoom-in-btn" title="Zoom In">+</button>
+            <button type="button" class="btn btn-outline btn-sm" id="zoom-out-btn" title="Zoom Out">&minus;</button>
+            <button type="button" class="btn btn-outline btn-sm" id="filter-btn" title="Toggle High-Contrast Pathology Filter">Filter</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="remove-btn" title="Remove and choose another image">Remove</button>
+          </div>
+        </div>
+
+        <div class="preview-viewport" id="preview-viewport">
+          <img id="preview-img" src="" alt="Loaded leaf preview">
+          
+          <!-- Scanning Laser HUD Animation (Visible upon submitting) -->
+          <div class="scanner-overlay" id="scanner-overlay">
+            <div class="laser-line"></div>
+            <div class="scan-progress-box">
+              <div class="status-dot" style="margin: 0 auto 0.75rem;"></div>
+              <div style="font-weight: 700; font-size: 1rem;">Analyzing Leaf Morphology</div>
+              <div class="scan-progress-msg" id="scan-progress-msg">[1/3] Calibrating leaf edge morphology...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Action Row -->
+      <div style="margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 0.82rem; color: var(--text-muted);">
+          All uploads are scanned securely and stored in your historical log.
+        </span>
+        <button type="submit" id="submit-btn" class="btn btn-primary btn-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7V4h3"/><path d="M20 7V4h-3"/><path d="M4 17v3h3"/><path d="M20 17v3h-3"/><circle cx="12" cy="12" r="3"/></svg>
+          Diagnose Leaf Now
+        </button>
+      </div>
+    </form>
+
+    <!-- Quick Sample Leaf Selector -->
+    <div class="sample-leaf-section">
+      <div class="sample-leaf-title">Or Try Instantly With Pre-Loaded Field Samples:</div>
+      <div class="sample-leaf-grid">
+        <button type="button" class="sample-leaf-chip" data-sample="{{ url_for('static', filename='samples/sample_tomato_blight.jpg') }}" data-crop="tomato">
+          <img src="{{ url_for('static', filename='samples/sample_tomato_blight.jpg') }}" alt="Tomato" class="sample-leaf-thumb">
+          <span>Tomato Early Blight</span>
+        </button>
+        <button type="button" class="sample-leaf-chip" data-sample="{{ url_for('static', filename='samples/sample_potato_blight.jpg') }}" data-crop="potato">
+          <img src="{{ url_for('static', filename='samples/sample_potato_blight.jpg') }}" alt="Potato" class="sample-leaf-thumb">
+          <span>Potato Late Blight</span>
+        </button>
+        <button type="button" class="sample-leaf-chip" data-sample="{{ url_for('static', filename='samples/sample_rice_healthy.jpg') }}" data-crop="rice">
+          <img src="{{ url_for('static', filename='samples/sample_rice_healthy.jpg') }}" alt="Rice" class="sample-leaf-thumb">
+          <span>Healthy Rice</span>
+        </button>
+        <button type="button" class="sample-leaf-chip" data-sample="{{ url_for('static', filename='samples/sample_maize_spot.jpg') }}" data-crop="maize">
+          <img src="{{ url_for('static', filename='samples/sample_maize_spot.jpg') }}" alt="Maize" class="sample-leaf-thumb">
+          <span>Maize Leaf Spot</span>
+        </button>
+        <button type="button" class="sample-leaf-chip" data-sample="{{ url_for('static', filename='samples/sample_chilli_curl.jpg') }}" data-crop="chilli">
+          <img src="{{ url_for('static', filename='samples/sample_chilli_curl.jpg') }}" alt="Chilli" class="sample-leaf-thumb">
+          <span>Chilli Leaf Curl</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Sidebar: Field Guidelines & Specimen Tips -->
+  <aside class="scanner-sidebar">
+    <div class="sidebar-card">
+      <h3 class="sidebar-card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Field Photography Tips
+      </h3>
+      <ul class="guideline-list">
+        <li>
+          <span>&check;</span>
+          <span><strong>Isolate 1 Leaf:</strong> Hold the suspect leaf against a clean background or your palm.</span>
+        </li>
+        <li>
+          <span>&check;</span>
+          <span><strong>Focus on Lesions:</strong> Ensure disease spots or chlorosis are sharp and well-lit.</span>
+        </li>
+        <li>
+          <span>&check;</span>
+          <span><strong>Diffused Daylight:</strong> Avoid harsh direct flashlight glare that washes out fungal color.</span>
+        </li>
+        <li>
+          <span>&check;</span>
+          <span><strong>Fill Frame:</strong> Let the leaf blade occupy 70%+ of the camera viewport.</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sidebar-card">
+      <h3 class="sidebar-card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Model Calibration
+      </h3>
+      <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+        PlantCare AI uses Google Gemini 2.5 Flash Vision. It returns calibrated confidence metrics and will report uncertainty if symptoms cannot be identified reliably.
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}
