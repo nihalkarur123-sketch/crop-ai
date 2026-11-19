@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Scan History – PlantCare AI{% endblock %}
+
+{% block content %}
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em;">Diagnostic Scan History</h1>
+    <p style="font-size: 0.9rem; color: var(--text-secondary);">Archive of all leaf pathology analyses recorded in the system.</p>
+  </div>
+
+  <div style="display: flex; gap: 0.75rem;">
+    <button type="button" id="export-csv-btn" class="btn btn-secondary btn-sm">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export CSV
+    </button>
+    <a href="{{ url_for('scan') }}" class="btn btn-primary btn-sm">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7V4h3"/><path d="M20 7V4h-3"/><path d="M4 17v3h3"/><path d="M20 17v3h-3"/><circle cx="12" cy="12" r="3"/></svg>
+      Scan Leaf
+    </a>
+  </div>
+</div>
+
+<div class="table-card">
+  <!-- Toolbar: Search + Crop Filters -->
+  <div class="table-toolbar">
+    <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+      <button type="button" class="btn btn-outline btn-sm table-filter-pill active" data-filter="all">All Crops</button>
+      <button type="button" class="btn btn-outline btn-sm table-filter-pill" data-filter="tomato">Tomato</button>
+      <button type="button" class="btn btn-outline btn-sm table-filter-pill" data-filter="potato">Potato</button>
+      <button type="button" class="btn btn-outline btn-sm table-filter-pill" data-filter="rice">Rice</button>
+      <button type="button" class="btn btn-outline btn-sm table-filter-pill" data-filter="maize">Maize</button>
+      <button type="button" class="btn btn-outline btn-sm table-filter-pill" data-filter="chilli">Chilli</button>
+      <button type="button" class="btn btn-outline btn-sm table-filter-pill" data-filter="healthy">Healthy Only</button>
+      <button type="button" class="btn btn-outline btn-sm table-filter-pill" data-filter="diseased">Diseased Only</button>
+    </div>
+
+    <div class="search-input-wrap">
+      <span class="search-icon">&telrec;</span>
+      <input type="text" id="table-search-input" class="search-input" placeholder="Search by crop or disease...">
+    </div>
+  </div>
+
+  {% if diagnoses %}
+    <div style="overflow-x: auto;">
+      <table class="data-table" id="filterable-table">
+        <thead>
+          <tr>
+            <th>Specimen</th>
+            <th>Recorded At (UTC)</th>
+            <th>Crop</th>
+            <th>Predicted Condition</th>
+            <th>Confidence</th>
+            <th>Severity</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in diagnoses %}
+            {% set is_healthy = (d.severity|lower == 'low' or d.disease_name|lower == 'healthy') %}
+            <tr data-status="{% if is_healthy %}healthy{% else %}diseased{% endif %}" data-crop="{{ d.crop|lower }}">
+              <td>
+                <img src="{{ url_for('uploaded_file', name=d.image_path) }}" alt="{{ d.crop }}" class="table-thumb">
+              </td>
+              <td style="font-family: var(--font-mono); font-size: 0.82rem;">
+                {{ d.created_at[:16]|replace('T', ' ') if d.created_at else '' }}
+              </td>
+              <td style="font-weight: 600; text-transform: capitalize;">{{ d.crop }}</td>
+              <td style="font-weight: 500;">{{ d.disease_name }}</td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="font-family: var(--font-mono); font-size: 0.82rem;">{{ d.confidence }}%</span>
+                  <div style="width: 50px; height: 5px; background: var(--bg-surface-4); border-radius: 99px; overflow: hidden;">
+                    <div style="height: 100%; width: {{ d.confidence }}%; background: var(--text-primary);"></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge {% if is_healthy %}badge-healthy{% else %}badge-diseased{% endif %}">
+                  {{ d.severity|capitalize }}
+                </span>
+              </td>
+              <td>
+                <a href="{{ url_for('result', diag_id=d.id) }}" class="btn btn-outline btn-sm">
+                  View Report
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 3.5rem 1rem;">
+      <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.25rem;">
+        No field diagnoses found in the database.
+      </p>
+      <a href="{{ url_for('scan') }}" class="btn btn-primary btn-sm">
+        Start First Leaf Scan
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

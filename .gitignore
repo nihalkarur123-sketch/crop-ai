@@ -1,0 +1,28 @@
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment Variables
+.env
+
+# Local Database & Uploads
+diagnoses.db
+uploads/*.jpg
+uploads/*.jpeg
+uploads/*.png
+!uploads/.gitkeep
+
+# macOS
+.DS_Store
