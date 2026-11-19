@@ -40,6 +40,8 @@ def create_app():
 
     # 1. Landing Page
     @app.route("/")
+    @app.route("/api/index")
+    @app.route("/api")
     def landing():
         records = db.list_diagnoses(DB_PATH, limit=100)
         total_scans = len(records)
